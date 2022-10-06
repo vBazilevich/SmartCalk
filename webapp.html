@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+        <title>SmartCalc</title>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+        <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    </head>
+    <body>
+        <h1>Blockchain. Week 3. Calculator</h1>
+        <h2>Vladimir Bazilevich</h2>
+
+        <p id='status'>Loading...</p>
+
+        <form>
+            <label for='argA'>First argument:</label>
+            <input type='number' id='argA' name='argA' value=1><br>
+
+            <label for='argB'>Second argument:</label>
+            <input type='number' id='argB' name='argB' value=0><br>
+
+            <select name='opcode' id='opcode'>
+                <option value='add'>Add</option>
+                <option value='sub'>Subtract</option>
+                <option value='mult'>Multiply</option>
+                <option value='divide' selected>Divide</option>
+            </select>
+
+        </form>
+
+        <button onclick='calculate();'>Calculate</button>
+
+        <script type='text/javascript'>
+            async function loadWeb3() {
+                if (window.ethereum) {
+                    window.web3 = new Web3(window.ethereum);
+                    window.ethereum.enable();
+                    console.log('Connected to MetaMask wallet');
+                } else {
+                    console.log('Can\'t connect to MetaMask wallet');
+                }
+            }
+
+            async function load() {
+                await loadWeb3();
+                window.contract = await loadContract();
+                updateStatus('Ready!');
+            }
+
+            function updateStatus(status) {
+                const statusEl = document.getElementById('status');
+                statusEl.innerHTML = status;
+                console.log(status);
+            }
+
+            async function loadContract() {
+                return await new window.web3.eth.Contract([
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "int256",
+                                "name": "x",
+                                "type": "int256"
+                            },
+                            {
+                                "internalType": "int256",
+                                "name": "y",
+                                "type": "int256"
+                            }
+                        ],
+                        "name": "add",
+                        "outputs": [
+                            {
+                                "internalType": "int256",
+                                "name": "",
+                                "type": "int256"
+                            }
+                        ],
+                        "stateMutability": "pure",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "int256",
+                                "name": "x",
+                                "type": "int256"
+                            },
+                            {
+                                "internalType": "int256",
+                                "name": "y",
+                                "type": "int256"
+                            }
+                        ],
+                        "name": "divide",
+                        "outputs": [
+                            {
+                                "internalType": "int256",
+                                "name": "",
+                                "type": "int256"
+                            }
+                        ],
+                        "stateMutability": "pure",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "int256",
+                                "name": "x",
+                                "type": "int256"
+                            },
+                            {
+                                "internalType": "int256",
+                                "name": "y",
+                                "type": "int256"
+                            }
+                        ],
+                        "name": "multiply",
+                        "outputs": [
+                            {
+                                "internalType": "int256",
+                                "name": "",
+                                "type": "int256"
+                            }
+                        ],
+                        "stateMutability": "pure",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "int256",
+                                "name": "x",
+                                "type": "int256"
+                            },
+                            {
+                                "internalType": "int256",
+                                "name": "y",
+                                "type": "int256"
+                            }
+                        ],
+                        "name": "subtract",
+                        "outputs": [
+                            {
+                                "internalType": "int256",
+                                "name": "",
+                                "type": "int256"
+                            }
+                        ],
+                        "stateMutability": "pure",
+                        "type": "function"
+                    }
+                ],
+                    '0xd259bC23266f8e65c817D70ae78a375A23D66EfB');
+            }
+            async function getCurrentAccount() {
+                const accounts = await window.web3.eth.getAccounts();
+                return accounts[0];
+            }
+
+            async function calculate() {
+                updateStatus('Calculating...');
+                const a = document.getElementById('argA').value;
+                const b = document.getElementById('argB').value;
+                const opcode = document.getElementById('opcode').value;
+                console.log("A:" + a + " B: " + b + " opcode: " + opcode);
+
+                const account = await getCurrentAccount();
+                var val = 0;
+
+                switch(opcode) {
+                    case 'add':
+                        val = await window.contract.methods
+                            .add(a, b)
+                            .call({from : account});
+                        updateStatus('Addition result: ' + val);
+                        break;
+                    case 'sub':
+                        val = await window.contract.methods
+                            .subtract(a, b)
+                            .call({from : account});
+                        updateStatus('Subtraction result: ' + val);
+                        break;
+                    case 'mult':
+                        val = await window.contract.methods
+                            .multiply(a, b)
+                            .call({from : account});
+                        updateStatus('Multiplication result: ' + val);
+                        break;
+                    case 'divide':
+                        try{
+                            val = await window.contract.methods
+                                .divide(a, b)
+                                .call({from : account});
+                            updateStatus('Division result: ' + val);
+                        } catch (error) {
+                            updateStatus(error.message.slice(20, 48));
+                        }
+                        break;
+                    default:
+                        updateStatus('Unknown opcode');
+                }
+            }
+
+            window.addEventListener('load', async () => {
+                // Modern dapp browsers...
+                if (window.ethereum) {
+                    window.web3 = new Web3(ethereum);
+                    try {
+                        // Request account access if needed
+                        await ethereum.enable();
+                        // Acccounts now exposed
+                        web3.eth.sendTransaction({/* ... */});
+                    } catch (error) {
+                        // User denied account access...
+                    }
+                }
+                // Legacy dapp browsers...
+                else if (window.web3) {
+                    window.web3 = new Web3(web3.currentProvider);
+                    // Acccounts always exposed
+                    web3.eth.sendTransaction({/* ... */});
+                }
+                // Non-dapp browsers...
+                else {
+                    console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+                }
+            });
+
+            load();
+        </script>
+    </body>
+</html>
